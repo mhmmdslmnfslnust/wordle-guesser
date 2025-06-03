@@ -1,6 +1,82 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { WORD_LIST } from './wordsList';
 
+// Dark mode integration for React
+const ThemeContext = React.createContext({
+  darkMode: false,
+  toggleDarkMode: () => {},
+});
+
+// ThemeProvider component to manage dark mode state
+const ThemeProvider = ({ children }) => {
+  const [darkMode, setDarkMode] = useState(() => {
+    // Initialize from localStorage or system preference
+    const storedTheme = localStorage.getItem('theme');
+    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    return storedTheme === 'dark' || (!storedTheme && prefersDark);
+  });
+
+  // Update both React state and document classes
+  const toggleDarkMode = () => {
+    setDarkMode(prev => {
+      const newMode = !prev;
+      localStorage.setItem('theme', newMode ? 'dark' : 'light');
+      
+      // Update document classes for CSS
+      if (newMode) {
+        document.documentElement.classList.add('dark-mode');
+        document.body.classList.add('dark-mode');
+      } else {
+        document.documentElement.classList.remove('dark-mode');
+        document.body.classList.remove('dark-mode');
+      }
+      
+      return newMode;
+    });
+  };
+
+  // Update document classes on initial render
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add('dark-mode');
+      document.body.classList.add('dark-mode');
+    } else {
+      document.documentElement.classList.remove('dark-mode');
+      document.body.classList.remove('dark-mode');
+    }
+  }, []);
+
+  return (
+    <ThemeContext.Provider value={{ darkMode, toggleDarkMode }}>
+      {children}
+    </ThemeContext.Provider>
+  );
+};
+
+// Custom hook to use the theme
+const useTheme = () => React.useContext(ThemeContext);
+
+// Dark mode toggle component for React
+const DarkModeToggle = () => {
+  const { toggleDarkMode } = useTheme();
+  
+  return (
+    <button className="dark-mode-toggle" aria-label="Toggle dark mode" onClick={toggleDarkMode}>
+      {/* Improved Sun icon for dark mode */}
+      <svg className="sun-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+        <circle cx="12" cy="12" r="5" />
+        <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+      </svg>
+      
+      {/* Moon icon for light mode */}
+      <svg className="moon-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor">
+        <path d="M12 10.999c1.437.438 2.562 1.564 2.999 3.001.44-1.437 1.565-2.562 3.001-3-1.436-.439-2.561-1.563-3.001-3-.437 1.436-1.562 2.561-2.999 2.999zm8.001.001c.958.293 1.707 1.042 2 2.001.291-.959 1.042-1.709 1.999-2.001-.957-.292-1.707-1.042-2-2-.293.958-1.042 1.708-1.999 2zm-1-9c-.437 1.437-1.563 2.562-2.998 3.001 1.438.44 2.561 1.564 3.001 3.002.437-1.438 1.563-2.563 2.996-3.002-1.433-.437-2.559-1.564-2.999-3.001zm-7.001 22c-6.617 0-12-5.383-12-12s5.383-12 12-12c1.894 0 3.63.497 5.37 1.179-2.948.504-9.37 3.266-9.37 10.821 0 7.454 5.917 10.208 9.37 10.821-1.5.846-3.476 1.179-5.37 1.179z"/>
+      </svg>
+    </button>
+  );
+};
+
+// Main WordleGuesser component
 const WordleGuesser = () => {
   const [allWords, setAllWords] = useState([]);
   const [guesses, setGuesses] = useState([]);
@@ -398,265 +474,281 @@ const WordleGuesser = () => {
     }
   };
 
+  // Custom class names that respect theme
+  const themeClasses = {
+    container: "container mx-auto p-4 max-w-4xl",
+    virtualKeyboard: "mb-6 bg-white p-4 border border-gray-200 rounded-lg shadow-sm",
+    statisticsPanel: "p-4 bg-gray-100 rounded-lg shadow",
+    wordItem: "p-2 border rounded-md hover:bg-gray-100 cursor-pointer"
+  };
+
   return (
-    <div className="container mx-auto p-4 max-w-4xl">
-      <h1 className="text-3xl font-bold mb-6 text-center">Wordle Guesser</h1>
-      
-      {/* Loading status */}
-      <div className="mb-4 text-center">
-        {loading ? (
-          <p className="text-blue-600">Loading words...</p>
-        ) : error ? (
-          <p className="text-red-600">{error}</p>
-        ) : (
-          <p>
-            Words loaded: <strong>{allWords.length}</strong>, 
-            Possible matches: <strong>{possibleWords.length}</strong>
-          </p>
-        )}
-      </div>
-      
-      {/* Interactive virtual keyboard with letter status */}
-      <div className="mb-6 bg-white p-4 border border-gray-200 rounded-lg shadow-sm">
-        <h2 className="text-xl font-semibold mb-2">Virtual Keyboard</h2>
-        <p className="text-sm text-gray-500 mb-2">Click or tap letters to type • Colors show letter statuses</p>
-        <div className="flex flex-col items-center gap-1 mb-2">
-          {KEYBOARD_LAYOUT.map((row, rowIndex) => (
-            <div key={rowIndex} className="flex gap-1">
-              {rowIndex === 2 && (
-                <button
-                  className="w-12 h-11 flex items-center justify-center font-medium rounded bg-gray-300 text-black"
-                  onClick={handleBackspace}
-                >
-                  ⌫
-                </button>
-              )}
-              {row.map(key => (
-                <button 
-                  key={key} 
-                  className={`w-9 h-11 flex items-center justify-center font-medium rounded ${getLetterStatusClass(key)} hover:opacity-80 active:opacity-70 cursor-pointer transition-all`}
-                  onClick={() => handleKeyboardClick(key)}
-                >
-                  {key}
-                </button>
-              ))}
-              {rowIndex === 2 && (
-                <button
-                  className="w-12 h-11 flex items-center justify-center font-medium rounded bg-blue-600 text-white hover:bg-blue-700"
-                  onClick={handleSubmitGuess}
-                  disabled={currentGuess.length !== 5}
-                >
-                  ↵
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
-      </div>
-      
-      {/* Form to enter guess */}
-      <form onSubmit={handleSubmitGuess} className="mb-6">
-        <div className="flex flex-col md:flex-row gap-4 items-center">
-          <div className="w-full md:w-1/2">
-            <label htmlFor="guess" className="block text-sm font-medium text-gray-700">Guess (5 letters)</label>
-            <input
-              type="text"
-              id="guess"
-              value={currentGuess}
-              onChange={(e) => {
-                const value = e.target.value.toLowerCase().substring(0, 5);
-                setCurrentGuess(value);
-                
-                // Reset feedback for positions beyond the current word length
-                if (value.length < currentGuess.length) {
-                  const newFeedback = [...feedback];
-                  for (let i = value.length; i < 5; i++) {
-                    newFeedback[i] = '';
-                  }
-                  setFeedback(newFeedback);
-                }
-              }}
-              className="mt-1 p-2 w-full border rounded-md uppercase"
-              maxLength="5"
-              placeholder="Enter your guess or use keyboard below"
-            />
+    <ThemeProvider>
+      <div className={themeClasses.container}>
+        {/* Updated header with centered title and toggle on side */}
+        <header className="header-container mb-6">
+          <h1 className="header-title centered-title">Wordle Guesser</h1>
+          <div className="toggle-container">
+            <DarkModeToggle />
           </div>
-          
-          <div className="w-full md:w-1/2 mt-2">
-            <div className="flex justify-end mb-2">
-              <button
-                type="submit"
-                className="p-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-blue-300"
-                disabled={currentGuess.length !== 5}
-              >
-                Add Guess
-              </button>
-            </div>
-          </div>
-        </div>
+        </header>
         
-        {/* Interactive feedback selector */}
-        <div className="my-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Click on each letter to set feedback color:
-          </label>
-          <div className="flex justify-center gap-2">
-            {Array(5).fill().map((_, index) => (
-              <div 
-                key={index}
-                onClick={() => cycleLetterFeedback(index)}
-                className={`w-12 h-12 flex items-center justify-center text-xl font-bold rounded-md cursor-pointer uppercase transition-colors ${
-                  feedback[index] ? FEEDBACK_TYPES.find(t => t.symbol === feedback[index])?.color : 'bg-white border-2 border-gray-300'
-                } ${
-                  feedback[index] ? FEEDBACK_TYPES.find(t => t.symbol === feedback[index])?.text : 'text-gray-700'
-                }`}
-                title={getFeedbackDescription(index)}
-              >
-                {index < currentGuess.length ? currentGuess[index].toUpperCase() : '?'}
-              </div>
-            ))}
-          </div>
-          <div className="flex justify-center mt-2 text-sm text-gray-600">
-            <p>Click tiles to cycle: Empty → Green (🟩) → Yellow (🟨) → Gray (⬛) → Empty</p>
-          </div>
-        </div>
-      </form>
-      
-      {/* Toolbar with reset and copy buttons */}
-      <div className="flex justify-between mb-6">
-        <button
-          type="button"
-          onClick={resetGame}
-          className="p-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
-        >
-          Reset
-        </button>
-        
-        <button
-          type="button"
-          onClick={copyResultsToClipboard}
-          className="p-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
-          disabled={guesses.length === 0}
-        >
-          Copy Results
-        </button>
-      </div>
-      
-      {/* Display guesses with feedback */}
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold mb-2">Your Guesses</h2>
-        {guesses.length === 0 ? (
-          <p className="text-gray-500">No guesses yet. Enter a guess and feedback above.</p>
-        ) : (
-          <div className="space-y-2">
-            {guesses.map((guess, index) => (
-              <div key={index} className="flex gap-2">
-                {[...guess.word].map((letter, i) => {
-                  const feedbackSymbol = guess.feedback[i];
-                  const feedbackType = FEEDBACK_TYPES.find(type => type.symbol === feedbackSymbol) || FEEDBACK_TYPES[3]; // Default to gray
-                  return (
-                    <div
-                      key={i}
-                      className={`w-10 h-10 flex items-center justify-center font-bold uppercase ${feedbackType.color} ${feedbackType.text} rounded-md`}
-                    >
-                      {letter}
-                    </div>
-                  );
-                })}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-      
-      {/* Statistics section */}
-      <div className="mb-4">
-        <h2 className="text-xl font-semibold mb-2">Statistics</h2>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="p-4 bg-gray-100 rounded-lg shadow">
-            <h3 className="text-lg font-semibold mb-2">Top Letters in Possible Words</h3>
-            {stats.topLetters && stats.topLetters.length > 0 ? (
-              <ul className="list-disc list-inside">
-                {stats.topLetters.map((letterInfo, index) => (
-                  <li key={index} className="text-gray-700">
-                    {letterInfo.letter.toUpperCase()}: {letterInfo.count} (
-                    {letterInfo.percentage}%)
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-gray-500">No statistics available yet.</p>
-            )}
-          </div>
-          
-          <div className="p-4 bg-gray-100 rounded-lg shadow">
-            <h3 className="text-lg font-semibold mb-2">Game Stats</h3>
-            <p className="text-gray-700">
-              Total Words: <strong>{stats.totalWords}</strong>
+        {/* Loading status */}
+        <div className="mb-4 text-center">
+          {loading ? (
+            <p className="text-blue-600">Loading words...</p>
+          ) : error ? (
+            <p className="text-red-600">{error}</p>
+          ) : (
+            <p>
+              Words loaded: <strong>{allWords.length}</strong>, 
+              Possible matches: <strong>{possibleWords.length}</strong>
             </p>
-          </div>
+          )}
         </div>
-      </div>
-      
-      {/* Search and sort controls */}
-      <div className="mb-4">
-        <input
-          type="text"
-          placeholder="Search within possible words..."
-          className="p-2 border rounded w-full mb-2"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-        />
-        <div className="flex items-center gap-2">
-          <label className="text-sm font-medium text-gray-700">Sort by:</label>
-          <select 
-            value={sortMethod}
-            onChange={(e) => setSortMethod(e.target.value)}
-            className="p-1 border rounded"
-          >
-            <option value="alphabetical">Alphabetical</option>
-            <option value="frequency">Letter Frequency</option>
-            <option value="positional">Positional Frequency</option>
-          </select>
-        </div>
-      </div>
-      
-      {/* Display possible words */}
-      <div>
-        {loading ? (
-          <div className="flex justify-center my-8">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700"></div>
-          </div>
-        ) : (
-          <div>
-            <h2 className="text-xl font-semibold mb-2">
-              Possible Words ({rankedWords.length} of {possibleWords.length} total)
-            </h2>
-            
-            {rankedWords.length === 0 ? (
-              <p className="text-gray-500">No matching words found. Try different guesses or check your feedback.</p>
-            ) : (
-              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
-                {rankedWords.slice(0, 100).map((word, index) => (
-                  <div 
-                    key={index} 
-                    className="p-2 border rounded-md hover:bg-gray-100 cursor-pointer"
-                    onClick={() => setCurrentGuess(word)}
+        
+        {/* Make the virtual keyboard a highlighted section */}
+        <div className={`${themeClasses.virtualKeyboard} highlight-section`}>
+          <h2 className="text-xl font-semibold mb-2">Virtual Keyboard</h2>
+          <p className="text-sm text-gray-500 mb-2">Click or tap letters to type • Colors show letter statuses</p>
+          <div className="flex flex-col items-center gap-1 mb-2">
+            {KEYBOARD_LAYOUT.map((row, rowIndex) => (
+              <div key={rowIndex} className="flex gap-1">
+                {rowIndex === 2 && (
+                  <button
+                    className="w-12 h-11 flex items-center justify-center font-medium rounded bg-gray-300 text-black"
+                    onClick={handleBackspace}
                   >
-                    {word}
-                  </div>
+                    ⌫
+                  </button>
+                )}
+                {row.map(key => (
+                  <button 
+                    key={key} 
+                    className={`w-9 h-11 flex items-center justify-center font-medium rounded ${getLetterStatusClass(key)} hover:opacity-80 active:opacity-70 cursor-pointer transition-all`}
+                    onClick={() => handleKeyboardClick(key)}
+                  >
+                    {key}
+                  </button>
                 ))}
-                {rankedWords.length > 100 && (
-                  <div className="p-2 col-span-full text-center text-gray-500">
-                    ...and {rankedWords.length - 100} more words
-                  </div>
+                {rowIndex === 2 && (
+                  <button
+                    className="w-12 h-11 flex items-center justify-center font-medium rounded bg-blue-600 text-white hover:bg-blue-700"
+                    onClick={handleSubmitGuess}
+                    disabled={currentGuess.length !== 5}
+                  >
+                    ↵
+                  </button>
                 )}
               </div>
-            )}
+            ))}
           </div>
-        )}
+        </div>
+        
+        {/* Form to enter guess - Update input styles */}
+        <form onSubmit={handleSubmitGuess} className="mb-6">
+          <div className="flex flex-col md:flex-row gap-4 items-center">
+            <div className="w-full md:w-1/2">
+              <label htmlFor="guess" className="block text-sm font-medium text-gray-700">Guess (5 letters)</label>
+              <input
+                type="text"
+                id="guess"
+                value={currentGuess}
+                onChange={(e) => {
+                  const value = e.target.value.toLowerCase().substring(0, 5);
+                  setCurrentGuess(value);
+                  
+                  // Reset feedback for positions beyond the current word length
+                  if (value.length < currentGuess.length) {
+                    const newFeedback = [...feedback];
+                    for (let i = value.length; i < 5; i++) {
+                      newFeedback[i] = '';
+                    }
+                    setFeedback(newFeedback);
+                  }
+                }}
+                className="mt-1 p-2 w-full border rounded-md uppercase"
+                maxLength="5"
+                placeholder="Enter your guess or use keyboard below"
+              />
+            </div>
+            
+            <div className="w-full md:w-1/2 mt-2">
+              <div className="flex justify-end mb-2">
+                <button
+                  type="submit"
+                  className="p-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:bg-blue-300"
+                  disabled={currentGuess.length !== 5}
+                >
+                  Add Guess
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          {/* Interactive feedback selector */}
+          <div className="my-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Click on each letter to set feedback color:
+            </label>
+            <div className="flex justify-center gap-2">
+              {Array(5).fill().map((_, index) => (
+                <div 
+                  key={index}
+                  onClick={() => cycleLetterFeedback(index)}
+                  className={`w-12 h-12 flex items-center justify-center text-xl font-bold rounded-md cursor-pointer uppercase transition-colors ${
+                    feedback[index] ? FEEDBACK_TYPES.find(t => t.symbol === feedback[index])?.color : 'bg-white border-2 border-gray-300'
+                  } ${
+                    feedback[index] ? FEEDBACK_TYPES.find(t => t.symbol === feedback[index])?.text : 'text-gray-700'
+                  }`}
+                  title={getFeedbackDescription(index)}
+                >
+                  {index < currentGuess.length ? currentGuess[index].toUpperCase() : '?'}
+                </div>
+              ))}
+            </div>
+            <div className="flex justify-center mt-2 text-sm text-gray-600">
+              <p>Click tiles to cycle: Empty → Green (🟩) → Yellow (🟨) → Gray (⬛) → Empty</p>
+            </div>
+          </div>
+        </form>
+        
+        {/* Toolbar with reset and copy buttons */}
+        <div className="flex justify-between mb-6">
+          <button
+            type="button"
+            onClick={resetGame}
+            className="p-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
+          >
+            Reset
+          </button>
+          
+          <button
+            type="button"
+            onClick={copyResultsToClipboard}
+            className="p-2 bg-indigo-600 text-white rounded-md hover:bg-indigo-700 transition-colors"
+            disabled={guesses.length === 0}
+          >
+            Copy Results
+          </button>
+        </div>
+        
+        {/* Display guesses with feedback */}
+        <div className="mb-6">
+          <h2 className="text-xl font-semibold mb-2">Your Guesses</h2>
+          {guesses.length === 0 ? (
+            <p className="text-gray-500">No guesses yet. Enter a guess and feedback above.</p>
+          ) : (
+            <div className="space-y-2">
+              {guesses.map((guess, index) => (
+                <div key={index} className="flex gap-2">
+                  {[...guess.word].map((letter, i) => {
+                    const feedbackSymbol = guess.feedback[i];
+                    const feedbackType = FEEDBACK_TYPES.find(type => type.symbol === feedbackSymbol) || FEEDBACK_TYPES[3]; // Default to gray
+                    return (
+                      <div
+                        key={i}
+                        className={`w-10 h-10 flex items-center justify-center font-bold uppercase ${feedbackType.color} ${feedbackType.text} rounded-md`}
+                      >
+                        {letter}
+                      </div>
+                    );
+                  })}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+        
+        {/* Statistics section - Update card backgrounds */}
+        <div className="mb-4 highlight-section">
+          <h2 className="text-xl font-semibold mb-2">Statistics</h2>
+          <div className="grid grid-cols-2 gap-4">
+            <div className={themeClasses.statisticsPanel}>
+              <h3 className="text-lg font-semibold mb-2">Top Letters in Possible Words</h3>
+              {stats.topLetters && stats.topLetters.length > 0 ? (
+                <ul className="list-disc list-inside">
+                  {stats.topLetters.map((letterInfo, index) => (
+                    <li key={index} className="text-gray-700">
+                      {letterInfo.letter.toUpperCase()}: {letterInfo.count} (
+                      {letterInfo.percentage}%)
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p className="text-gray-500">No statistics available yet.</p>
+              )}
+            </div>
+            
+            <div className={themeClasses.statisticsPanel}>
+              <h3 className="text-lg font-semibold mb-2">Game Stats</h3>
+              <p className="text-gray-700">
+                Total Words: <strong>{stats.totalWords}</strong>
+              </p>
+            </div>
+          </div>
+        </div>
+        
+        {/* Search and sort controls - Update input styles */}
+        <div className="mb-4">
+          <input
+            type="text"
+            placeholder="Search within possible words..."
+            className="p-2 border rounded w-full mb-2"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          <div className="flex items-center gap-2">
+            <label className="text-sm font-medium text-gray-700">Sort by:</label>
+            <select 
+              value={sortMethod}
+              onChange={(e) => setSortMethod(e.target.value)}
+              className="p-1 border rounded"
+            >
+              <option value="alphabetical">Alphabetical</option>
+              <option value="frequency">Letter Frequency</option>
+              <option value="positional">Positional Frequency</option>
+            </select>
+          </div>
+        </div>
+        
+        {/* Display possible words - Update word items */}
+        <div>
+          {loading ? (
+            <div className="flex justify-center my-8">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700"></div>
+            </div>
+          ) : (
+            <div>
+              <h2 className="text-xl font-semibold mb-2">
+                Possible Words ({rankedWords.length} of {possibleWords.length} total)
+              </h2>
+              
+              {rankedWords.length === 0 ? (
+                <p className="text-gray-500">No matching words found. Try different guesses or check your feedback.</p>
+              ) : (
+                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
+                  {rankedWords.slice(0, 100).map((word, index) => (
+                    <div 
+                      key={index} 
+                      className={themeClasses.wordItem}
+                      onClick={() => setCurrentGuess(word)}
+                    >
+                      {word}
+                    </div>
+                  ))}
+                  {rankedWords.length > 100 && (
+                    <div className="p-2 col-span-full text-center text-gray-500">
+                      ...and {rankedWords.length - 100} more words
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </ThemeProvider>
   );
 };
 
