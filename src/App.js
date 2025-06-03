@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from 'react';
-import allWordsList from './wordsList'; // Import words directly if available
+import React, { useState, useEffect, useMemo } from 'react';
+import { WORD_LIST } from './wordsList';
 
 const WordleGuesser = () => {
   const [allWords, setAllWords] = useState([]);
@@ -8,11 +8,15 @@ const WordleGuesser = () => {
   const [feedback, setFeedback] = useState(['', '', '', '', '']);
   const [possibleWords, setPossibleWords] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [letterStatuses, setLetterStatuses] = useState({});
   const [sortMethod, setSortMethod] = useState('alphabetical');
   const [searchTerm, setSearchTerm] = useState('');
-  const [displayLimit, setDisplayLimit] = useState(100);
-
+  
+  // Enable debugging to help troubleshoot issues
+  const DEBUG = true;
+  
+  // Define the KEYBOARD_LAYOUT constant
   const KEYBOARD_LAYOUT = [
     ['Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 'O', 'P'],
     ['A', 'S', 'D', 'F', 'G', 'H', 'J', 'K', 'L'],
@@ -27,43 +31,38 @@ const WordleGuesser = () => {
     { symbol: '⬛', color: 'bg-gray-500', text: 'text-white', description: 'Letter not in word' }
   ];
   
-  // Load all words on component mount
+  // Load the full word list from wordsList.js on component mount
   useEffect(() => {
-    const loadWords = async () => {
+    try {
       setLoading(true);
-      try {
-        let words;
-        
-        // Attempt to fetch from words.txt first
-        try {
-          const response = await fetch('/words.txt');
-          const text = await response.text();
-          words = text.split('\n')
-            .filter(word => word.trim().length === 5)
-            .map(word => word.toLowerCase());
-          
-          console.log(`Loaded ${words.length} words from words.txt`);
-        } catch (fetchError) {
-          // Fallback to imported list
-          console.warn("Failed to load from words.txt, using built-in list");
-          words = allWordsList;
-        }
-        
-        if (!words || words.length < 1000) {
-          console.warn("Word list seems incomplete, may affect functionality");
-        }
-        
-        setAllWords(words);
-        setPossibleWords(words);
-        console.log(`Total words loaded: ${words.length}`);
-      } catch (error) {
-        console.error("Failed to load word list:", error);
-      } finally {
-        setLoading(false);
+      setError(null);
+      
+      // Ensure words are properly formatted (lowercase, 5 letters)
+      const words = WORD_LIST
+        .map(word => word.toLowerCase().trim())
+        .filter(word => word.length === 5);
+      
+      if (DEBUG) console.log(`Loaded ${words.length} words from wordsList.js`);
+      
+      // Check if we actually have words
+      if (words.length === 0) {
+        throw new Error("No valid 5-letter words found in wordsList.js");
       }
-    };
-    
-    loadWords();
+      
+      // Set both allWords (master list) and possibleWords (filtered list)
+      setAllWords(words);
+      setPossibleWords(words);
+      
+      if (DEBUG) {
+        console.log("First 10 words:", words.slice(0, 10));
+        console.log("Last 10 words:", words.slice(-10));
+      }
+    } catch (err) {
+      console.error("Failed to load word list:", err);
+      setError(`Error loading words: ${err.message}`);
+    } finally {
+      setLoading(false);
+    }
   }, []);
   
   // Calculate letter frequencies for best word suggestions
@@ -74,71 +73,66 @@ const WordleGuesser = () => {
     const positionFrequencies = Array(5).fill().map(() => ({}));
     
     possibleWords.forEach(word => {
-      const seen = new Set();
-      
       [...word].forEach((letter, index) => {
         // Overall frequency
         frequencies[letter] = (frequencies[letter] || 0) + 1;
         
         // Position-specific frequency
         positionFrequencies[index][letter] = (positionFrequencies[index][letter] || 0) + 1;
-        
-        seen.add(letter);
       });
     });
     
     return { overall: frequencies, byPosition: positionFrequencies };
   }, [possibleWords]);
-
-  // Calculate word score based on letter frequencies
+  
+  // Helper functions for word scoring
   const getWordScore = (word, frequencies) => {
+    // Count unique letters only
     const uniqueLetters = [...new Set(word)];
     return uniqueLetters.reduce((score, letter) => score + (frequencies[letter] || 0), 0);
   };
-
-  // Calculate word score based on positional letter frequencies
+  
   const getPositionalWordScore = (word, positionFrequencies) => {
     return [...word].reduce((score, letter, index) => {
       return score + (positionFrequencies[index][letter] || 0);
     }, 0);
   };
 
-  // Filter displayed words based on search term
-  const filteredWords = useMemo(() => {
-    if (!searchTerm) return possibleWords;
-    return possibleWords.filter(word => 
-      word.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [possibleWords, searchTerm]);
-  
-  // Sort the filtered words
-  const displayedWords = useMemo(() => {
-    if (!filteredWords.length) return [];
+  // Sort filtered words based on selected method
+  const rankedWords = useMemo(() => {
+    if (!possibleWords.length) return [];
     
-    return [...filteredWords].sort((a, b) => {
+    // Apply search filter first
+    let filtered = possibleWords;
+    if (searchTerm) {
+      filtered = possibleWords.filter(word => 
+        word.includes(searchTerm.toLowerCase())
+      );
+    }
+    
+    // Now sort according to the selected method
+    return [...filtered].sort((a, b) => {
       if (sortMethod === 'frequency') {
-        // Score based on unique letter frequency
         const scoreA = getWordScore(a, letterFrequencies.overall);
         const scoreB = getWordScore(b, letterFrequencies.overall);
         return scoreB - scoreA;
       } else if (sortMethod === 'positional') {
-        // Score based on positional letter frequency
         const scoreA = getPositionalWordScore(a, letterFrequencies.byPosition);
         const scoreB = getPositionalWordScore(b, letterFrequencies.byPosition);
         return scoreB - scoreA;
       } else {
-        // Default alphabetical sorting
         return a.localeCompare(b);
       }
     });
-  }, [filteredWords, sortMethod, letterFrequencies]);
-
+  }, [possibleWords, letterFrequencies, sortMethod, searchTerm]);
+  
   // Update letter statuses based on guesses
   useEffect(() => {
     const statuses = {};
     
     guesses.forEach(guess => {
       [...guess.word].forEach((letter, index) => {
+        letter = letter.toLowerCase();
         const status = guess.feedback[index];
         
         // Don't downgrade a letter's status
@@ -158,19 +152,18 @@ const WordleGuesser = () => {
 
   // Cycle through feedback options for a letter
   const cycleLetterFeedback = (index) => {
-    if (currentGuess.length <= index) return; // Don't cycle if no letter at this position
+    if (currentGuess.length <= index) return;
     
     const newFeedback = [...feedback];
-    // Find current feedback type index
     const currentTypeIndex = newFeedback[index] ? 
       FEEDBACK_TYPES.findIndex(type => type.symbol === newFeedback[index]) : 0;
       
-    // Cycle to next feedback type
     const nextTypeIndex = (currentTypeIndex + 1) % FEEDBACK_TYPES.length;
     newFeedback[index] = FEEDBACK_TYPES[nextTypeIndex].symbol;
     setFeedback(newFeedback);
   };
 
+  // Add a new guess with feedback
   const handleSubmitGuess = (e) => {
     e.preventDefault();
     
@@ -189,92 +182,119 @@ const WordleGuesser = () => {
     
     const updatedGuesses = [...guesses, newGuess];
     setGuesses(updatedGuesses);
+    
+    if (DEBUG) console.log("Added guess:", newGuess);
+    
+    // Reset input fields
     setCurrentGuess('');
     setFeedback(['', '', '', '', '']);
     
     // Filter possible words based on new guess and feedback
     filterPossibleWords(updatedGuesses);
-    
-    console.log("Added guess:", newGuess); // Debug info
   };
 
-  const loadMoreWords = () => {
-    setDisplayLimit(prev => prev + 100);
-  };
-  
-  // Modify the filterPossibleWords function to log more information
+  // Filter words based on all guesses and feedback
   const filterPossibleWords = (allGuesses) => {
     setLoading(true);
     
     // Use setTimeout to prevent UI freezing during filtering
     setTimeout(() => {
       try {
-        console.log(`Filtering from ${allWords.length} total words`);
+        if (DEBUG) {
+          console.log(`Starting to filter from ${allWords.length} words based on ${allGuesses.length} guesses`);
+          console.log("All guesses:", allGuesses);
+        }
+        
+        // Make sure we have words to filter
+        if (!allWords.length) {
+          console.error("No words to filter from");
+          setError("Word list is empty. Please reload the page.");
+          setLoading(false);
+          return;
+        }
         
         const filtered = allWords.filter(word => {
-          return allGuesses.every(guess => isCompatible(word, guess));
+          return allGuesses.every(guess => isWordCompatible(word, guess));
         });
         
-        setPossibleWords(filtered);
-        console.log(`Found ${filtered.length} compatible words`);
+        if (DEBUG) {
+          console.log(`Found ${filtered.length} compatible words`);
+          if (filtered.length < 20) {
+            console.log("Compatible words:", filtered);
+          } else {
+            console.log("First 10 compatible words:", filtered.slice(0, 10));
+          }
+        }
         
-        // Reset display limit when filtering changes results
-        setDisplayLimit(100);
+        setPossibleWords(filtered);
       } catch (error) {
         console.error("Error during filtering:", error);
+        setError(`Error filtering words: ${error.message}`);
       } finally {
         setLoading(false);
       }
     }, 10);
   };
 
-  const isCompatible = (word, guess) => {
+  // Improved compatibility check between a candidate word and a guess+feedback
+  const isWordCompatible = (candidate, guess) => {
+    const candidateWord = candidate.toLowerCase();
     const guessWord = guess.word.toLowerCase();
     const guessFeedback = guess.feedback;
     
-    // Create arrays of letters for better handling
-    const wordLetters = [...word];
-    const guessLetters = [...guessWord];
-    
-    // First check: green positions (correct letter, correct position)
-    for (let i = 0; i < 5; i++) {
-      if (guessFeedback[i] === '🟩' && wordLetters[i] !== guessLetters[i]) {
-        return false;
-      }
+    if (DEBUG && candidate === "about") {
+      console.log(`Checking if "about" is compatible with guess: ${guessWord}, feedback: ${guessFeedback}`);
     }
     
-    // Create a map to track available letters in the candidate word
-    // This helps handle duplicate letters correctly
-    const availableLetters = {};
-    wordLetters.forEach(letter => {
-      availableLetters[letter] = (availableLetters[letter] || 0) + 1;
-    });
+    // Track counts of each letter in the candidate word
+    const letterCounts = {};
+    for (const letter of candidateWord) {
+      letterCounts[letter] = (letterCounts[letter] || 0) + 1;
+    }
     
-    // Mark green positions as used
+    // Create a copy for tracking "used" letters
+    const availableLetters = { ...letterCounts };
+    
+    // First process green matches to ensure they're prioritized
     for (let i = 0; i < 5; i++) {
       if (guessFeedback[i] === '🟩') {
-        availableLetters[guessLetters[i]]--;
-      }
-    }
-    
-    // Check yellow positions (letter in word, wrong position)
-    for (let i = 0; i < 5; i++) {
-      if (guessFeedback[i] === '🟨') {
-        // The letter should be in the word but not at this position
-        if (wordLetters[i] === guessLetters[i] || 
-            !availableLetters[guessLetters[i]] || 
-            availableLetters[guessLetters[i]] <= 0) {
+        // Green = exact match required
+        if (candidateWord[i] !== guessWord[i]) {
           return false;
         }
-        availableLetters[guessLetters[i]]--;
+        // Mark this letter as "used"
+        availableLetters[guessWord[i]]--;
       }
     }
     
-    // Check gray positions (letter not in word, unless already marked as green or yellow)
+    // Now process yellow matches
+    for (let i = 0; i < 5; i++) {
+      if (guessFeedback[i] === '🟨') {
+        // Yellow = letter must exist somewhere else in the word
+        
+        // If it's the same letter at the same position, it can't be yellow
+        if (candidateWord[i] === guessWord[i]) {
+          return false;
+        }
+        
+        // If the letter doesn't exist or all instances are used, word doesn't match
+        if (!availableLetters[guessWord[i]] || availableLetters[guessWord[i]] <= 0) {
+          return false;
+        }
+        
+        // Mark this letter as "used"
+        availableLetters[guessWord[i]]--;
+      }
+    }
+    
+    // Finally process gray letters
     for (let i = 0; i < 5; i++) {
       if (guessFeedback[i] === '⬛') {
-        // If this gray letter still has available slots, it means there are too many of this letter
-        if (availableLetters[guessLetters[i]] && availableLetters[guessLetters[i]] > 0) {
+        // Gray = letter must not exist in word (unless it's used by a green or yellow)
+        const letter = guessWord[i];
+        
+        // If the candidate still has this letter available, it doesn't match the constraint
+        if (availableLetters[letter] && availableLetters[letter] > 0) {
           return false;
         }
       }
@@ -282,15 +302,19 @@ const WordleGuesser = () => {
     
     return true;
   };
-  
+
+  // Reset the game
   const resetGame = () => {
     setGuesses([]);
     setCurrentGuess('');
     setFeedback(['', '', '', '', '']);
     setPossibleWords(allWords);
     setLetterStatuses({});
+    setSearchTerm('');
+    setError(null);
   };
 
+  // Get CSS class for letter status
   const getLetterStatusClass = (letter) => {
     const status = letterStatuses[letter.toLowerCase()];
     if (!status) return 'bg-gray-200 text-black';
@@ -302,7 +326,8 @@ const WordleGuesser = () => {
       default: return 'bg-gray-200 text-black';
     }
   };
-
+  
+  // Generate statistics for remaining words
   const getStatistics = () => {
     if (!possibleWords.length) return {};
     
@@ -330,9 +355,10 @@ const WordleGuesser = () => {
       topLetters: sortedLetters
     };
   };
-
+  
   const stats = getStatistics();
   
+  // Format results for clipboard
   const copyResultsToClipboard = () => {
     const guessesText = guesses.map(g => 
       `${g.word.toUpperCase()}: ${g.feedback.join('')}`
@@ -345,7 +371,8 @@ const WordleGuesser = () => {
       .then(() => alert('Results copied to clipboard!'))
       .catch(err => alert('Failed to copy: ' + err));
   };
-
+  
+  // Get description for feedback type
   const getFeedbackDescription = (index) => {
     if (index < 0 || index >= feedback.length || !feedback[index]) return '';
     const feedbackType = FEEDBACK_TYPES.find(type => type.symbol === feedback[index]);
@@ -355,6 +382,20 @@ const WordleGuesser = () => {
   return (
     <div className="container mx-auto p-4 max-w-4xl">
       <h1 className="text-3xl font-bold mb-6 text-center">Wordle Guesser</h1>
+      
+      {/* Word count status */}
+      <div className="mb-4 text-center">
+        {loading ? (
+          <p className="text-blue-600">Loading words...</p>
+        ) : error ? (
+          <p className="text-red-600">{error}</p>
+        ) : (
+          <p>
+            Words loaded: <strong>{allWords.length}</strong>, 
+            Possible matches: <strong>{possibleWords.length}</strong>
+          </p>
+        )}
+      </div>
       
       {/* Form to enter guess */}
       <form onSubmit={handleSubmitGuess} className="mb-6">
@@ -403,7 +444,7 @@ const WordleGuesser = () => {
             Click on each letter to set feedback color:
           </label>
           <div className="flex justify-center gap-2">
-            {currentGuess.split('').map((letter, index) => (
+            {Array(5).fill().map((_, index) => (
               <div 
                 key={index}
                 onClick={() => cycleLetterFeedback(index)}
@@ -414,15 +455,7 @@ const WordleGuesser = () => {
                 }`}
                 title={getFeedbackDescription(index)}
               >
-                {letter}
-              </div>
-            ))}
-            {Array(5 - currentGuess.length).fill().map((_, index) => (
-              <div
-                key={`empty-${index}`}
-                className="w-12 h-12 flex items-center justify-center border-2 border-gray-200 rounded-md text-gray-400"
-              >
-                ?
+                {index < currentGuess.length ? currentGuess[index].toUpperCase() : '?'}
               </div>
             ))}
           </div>
@@ -479,32 +512,80 @@ const WordleGuesser = () => {
         )}
       </div>
       
-      {/* Add search input */}
+      {/* Visual keyboard - Always displayed */}
+      <div className="mb-6 sticky bottom-4 bg-white p-4 border-t border-gray-200 shadow-lg rounded-lg">
+        <h2 className="text-xl font-semibold mb-2">Letter Status</h2>
+        <div className="flex flex-col items-center gap-1 mb-2">
+          {KEYBOARD_LAYOUT.map((row, rowIndex) => (
+            <div key={rowIndex} className="flex gap-1">
+              {rowIndex === 2 && <div className="w-4"></div>}
+              {row.map(key => (
+                <div 
+                  key={key} 
+                  className={`w-9 h-11 flex items-center justify-center font-medium rounded ${getLetterStatusClass(key)}`}
+                >
+                  {key}
+                </div>
+              ))}
+              {rowIndex === 2 && <div className="w-4"></div>}
+            </div>
+          ))}
+        </div>
+      </div>
+      
+      {/* Statistics section */}
+      <div className="mb-4">
+        <h2 className="text-xl font-semibold mb-2">Statistics</h2>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="p-4 bg-gray-100 rounded-lg shadow">
+            <h3 className="text-lg font-semibold mb-2">Top Letters in Possible Words</h3>
+            {stats.topLetters && stats.topLetters.length > 0 ? (
+              <ul className="list-disc list-inside">
+                {stats.topLetters.map((letterInfo, index) => (
+                  <li key={index} className="text-gray-700">
+                    {letterInfo.letter.toUpperCase()}: {letterInfo.count} (
+                    {letterInfo.percentage}%)
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-gray-500">No statistics available yet.</p>
+            )}
+          </div>
+          
+          <div className="p-4 bg-gray-100 rounded-lg shadow">
+            <h3 className="text-lg font-semibold mb-2">Game Stats</h3>
+            <p className="text-gray-700">
+              Total Words: <strong>{stats.totalWords}</strong>
+            </p>
+          </div>
+        </div>
+      </div>
+      
+      {/* Search and sort controls */}
       <div className="mb-4">
         <input
           type="text"
           placeholder="Search within possible words..."
-          className="p-2 border rounded w-full"
+          className="p-2 border rounded w-full mb-2"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
+        <div className="flex items-center gap-2">
+          <label className="text-sm font-medium text-gray-700">Sort by:</label>
+          <select 
+            value={sortMethod}
+            onChange={(e) => setSortMethod(e.target.value)}
+            className="p-1 border rounded"
+          >
+            <option value="alphabetical">Alphabetical</option>
+            <option value="frequency">Letter Frequency</option>
+            <option value="positional">Positional Frequency</option>
+          </select>
+        </div>
       </div>
       
-      {/* Word sorting options */}
-      <div className="mb-4 flex items-center gap-2">
-        <label className="text-sm font-medium text-gray-700">Sort by:</label>
-        <select 
-          value={sortMethod}
-          onChange={(e) => setSortMethod(e.target.value)}
-          className="p-1 border rounded"
-        >
-          <option value="alphabetical">Alphabetical</option>
-          <option value="frequency">Letter Frequency</option>
-          <option value="positional">Positional Frequency</option>
-        </select>
-      </div>
-      
-      {/* Display possible words with improved messaging */}
+      {/* Display possible words */}
       <div>
         {loading ? (
           <div className="flex justify-center my-8">
@@ -513,36 +594,25 @@ const WordleGuesser = () => {
         ) : (
           <div>
             <h2 className="text-xl font-semibold mb-2">
-              Possible Words ({filteredWords.length} of {possibleWords.length} total)
+              Possible Words ({rankedWords.length} of {possibleWords.length} total)
             </h2>
             
-            {filteredWords.length === 0 ? (
+            {rankedWords.length === 0 ? (
               <p className="text-gray-500">No matching words found. Try different guesses or check your feedback.</p>
             ) : (
-              <div>
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
-                  {displayedWords.slice(0, displayLimit).map((word, index) => (
-                    <div 
-                      key={index} 
-                      className="p-2 border rounded-md hover:bg-gray-100 cursor-pointer"
-                      onClick={() => setCurrentGuess(word)}
-                    >
-                      {word}
-                    </div>
-                  ))}
-                </div>
-                
-                {filteredWords.length > displayLimit && (
-                  <div className="text-center mt-4">
-                    <p className="text-gray-500 mb-2">
-                      Showing {displayLimit} of {filteredWords.length} words
-                    </p>
-                    <button 
-                      className="p-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                      onClick={loadMoreWords}
-                    >
-                      Load 100 More Words
-                    </button>
+              <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
+                {rankedWords.slice(0, 100).map((word, index) => (
+                  <div 
+                    key={index} 
+                    className="p-2 border rounded-md hover:bg-gray-100 cursor-pointer"
+                    onClick={() => setCurrentGuess(word)}
+                  >
+                    {word}
+                  </div>
+                ))}
+                {rankedWords.length > 100 && (
+                  <div className="p-2 col-span-full text-center text-gray-500">
+                    ...and {rankedWords.length - 100} more words
                   </div>
                 )}
               </div>
@@ -550,45 +620,6 @@ const WordleGuesser = () => {
           </div>
         )}
       </div>
-      
-      {/* Visual keyboard */}
-      <div className="mb-6">
-        <h2 className="text-xl font-semibold mb-2">Letter Status</h2>
-        <div className="flex flex-col items-center gap-1 mb-4">
-          {KEYBOARD_LAYOUT.map((row, rowIndex) => (
-            <div key={rowIndex} className="flex gap-1">
-              {rowIndex === 2 && <div className="w-4"></div>} {/* Offset for bottom row */}
-              {row.map(key => (
-                <div 
-                  key={key} 
-                  className={`w-8 h-10 flex items-center justify-center font-medium rounded ${getLetterStatusClass(key)}`}
-                >
-                  {key}
-                </div>
-              ))}
-              {rowIndex === 2 && <div className="w-4"></div>} {/* Offset for bottom row */}
-            </div>
-          ))}
-        </div>
-      </div>
-      
-      {/* Statistics section */}
-      {stats.totalWords > 0 && (
-        <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-          <h2 className="text-xl font-semibold mb-2">Statistics</h2>
-          <p className="mb-1">Total possible words: <span className="font-bold">{stats.totalWords}</span></p>
-          <div>
-            <p className="mb-1">Most common letters in remaining words:</p>
-            <div className="flex flex-wrap gap-2">
-              {stats.topLetters.map(({ letter, count, percentage }) => (
-                <div key={letter} className="px-2 py-1 bg-blue-100 rounded text-sm">
-                  <span className="font-bold uppercase">{letter}</span>: {percentage}% ({count})
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
