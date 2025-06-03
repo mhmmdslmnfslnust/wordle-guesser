@@ -10,7 +10,8 @@ An interactive tool to help you solve Wordle puzzles by suggesting possible word
 
 - Enter your Wordle guesses and receive color-coded feedback
 - Interactive feedback input - click on letters to cycle through colors
-- Visual keyboard showing the status of each letter
+- **Interactive virtual keyboard** for easy word entry - perfect for mobile devices
+- Visual keyboard showing the status of each letter with color-coding
 - Multiple sorting methods for possible words:
   - Alphabetical
   - Letter frequency (suggests words with common letters)
@@ -18,9 +19,9 @@ An interactive tool to help you solve Wordle puzzles by suggesting possible word
 - Statistics about remaining words and letter distribution
 - Copy results to clipboard for sharing
 - Simple, intuitive user interface with Tailwind CSS
-- Over 10,000 five-letter words built into the application
+- Over 14,000 five-letter words built into the application
 - Instant word filtering with efficient algorithms
-- Mobile-responsive design
+- Mobile-responsive design with touch-friendly controls
 
 ## Installation
 
@@ -44,24 +45,25 @@ An interactive tool to help you solve Wordle puzzles by suggesting possible word
 
 ## How to Use
 
-1. Enter your Wordle guess (a 5-letter word) in the input field
+1. Enter your Wordle guess (a 5-letter word) in the input field or use the **virtual keyboard**
 2. **Setting Feedback Colors**:
-   - After entering your guess, click on each letter to cycle through the feedback colors:
-   - First click: Green (🟩) - the letter is in the correct position
-   - Second click: Yellow (🟨) - the letter is in the word but in the wrong position
-   - Third click: Gray (⬛) - the letter is not in the word
-   - Fourth click: Back to no feedback
-   - You can keep clicking to cycle through these options
-   - The color you set should match what Wordle showed for that letter
-3. Click "Add Guess" to register your guess and feedback
-4. View the filtered list of possible words
-5. Use the sorting options to find the best next guess:
-   - Alphabetical: Sort words in alphabetical order
-   - Letter Frequency: Sort by words containing common letters
-   - Positional Frequency: Sort by words with letters in common positions
-6. Click on any suggested word to use it as your next guess
-7. Use the "Reset" button to start a new game
-8. Use "Copy Results" to share your progress
+   - Click on each letter in your guess to cycle through feedback colors
+   - Green (🟩): Correct letter in the correct position
+   - Yellow (🟨): Correct letter in the wrong position
+   - Gray (⬛): Letter not in the word
+3. Click "Add Guess" or press the enter button (↵) on the virtual keyboard
+4. View suggested words based on your guesses and feedback
+5. Use the search box to filter within possible words
+6. Select a sorting method to help find the best next guess
+7. Click on any suggested word to use it as your next guess
+8. Continue until you solve the puzzle!
+
+## Keyboard Navigation
+
+- Use the virtual keyboard to type your guesses by clicking or tapping
+- Backspace button (⌫) removes the last letter
+- Enter button (↵) submits your guess
+- All letter keys show their current status through color-coding
 
 ## Troubleshooting
 
