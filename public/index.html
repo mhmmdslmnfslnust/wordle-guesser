@@ -6,6 +6,11 @@
     <meta name="theme-color" content="#000000" />
     <meta name="description" content="Wordle Guesser - Help solve Wordle puzzles" />
     <title>Wordle Guesser</title>
+    <script>
+      // Pre-fetch the words list to improve load time
+      fetch('/words.txt')
+        .catch(err => console.warn('Words list pre-fetch failed, will try again during app load'));
+    </script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>

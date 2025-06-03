@@ -7,8 +7,14 @@ An interactive tool to help you solve Wordle puzzles by suggesting possible word
 ## Features
 
 - Enter your Wordle guesses and receive color-coded feedback
-- Get suggestions for valid next guesses based on all previous feedback
-- Filter possible words in real-time as you enter more guesses
+- Interactive feedback input - click on letters to cycle through colors
+- Visual keyboard showing the status of each letter
+- Multiple sorting methods for possible words:
+  - Alphabetical
+  - Letter frequency (suggests words with common letters)
+  - Positional frequency (suggests words with letters in common positions)
+- Statistics about remaining words and letter distribution
+- Copy results to clipboard for sharing
 - Simple, intuitive user interface with Tailwind CSS
 - Over 10,000 five-letter words built into the application
 - Instant word filtering with efficient algorithms
@@ -36,60 +42,85 @@ An interactive tool to help you solve Wordle puzzles by suggesting possible word
 
 ## How to Use
 
-1. Enter your Wordle guess (a 5-letter word) in the "Guess" field
-2. Add feedback by clicking the colored buttons:
-   - 🟩 Green: The letter is in the correct position
-   - 🟨 Yellow: The letter is in the word but in the wrong position
-   - ⬛ Gray: The letter is not in the word
+1. Enter your Wordle guess (a 5-letter word) in the input field
+2. **Setting Feedback Colors**:
+   - After entering your guess, click on each letter to cycle through the feedback colors:
+   - First click: Green (🟩) - the letter is in the correct position
+   - Second click: Yellow (🟨) - the letter is in the word but in the wrong position
+   - Third click: Gray (⬛) - the letter is not in the word
+   - Fourth click: Back to no feedback
+   - You can keep clicking to cycle through these options
+   - The color you set should match what Wordle showed for that letter
 3. Click "Add Guess" to register your guess and feedback
 4. View the filtered list of possible words
-5. Click on any suggested word to use it as your next guess
-6. Use the "Reset" button to start a new game
+5. Use the sorting options to find the best next guess:
+   - Alphabetical: Sort words in alphabetical order
+   - Letter Frequency: Sort by words containing common letters
+   - Positional Frequency: Sort by words with letters in common positions
+6. Click on any suggested word to use it as your next guess
+7. Use the "Reset" button to start a new game
+8. Use "Copy Results" to share your progress
 
-### Example Workflow
+## Troubleshooting
 
-1. Start with a guess like "STARE" (a good starting word with common letters)
-2. In Wordle, enter "STARE" and note the color feedback
-3. In Wordle Guesser, type "STARE" and click the color buttons to match the feedback
-4. Click "Add Guess" to see filtered suggestions
-5. Choose a logical next guess from the suggestions and repeat
+If no possible words are shown:
+- Double-check that your feedback colors accurately match what Wordle showed
+- Make sure you've set feedback for all letters in your guess
+- Try a different guess if the current one might have incorrect feedback
+
+## Example Workflow
+
+1. Start with a word like "STARE" (a good first guess with common letters)
+2. Enter "STARE" in Wordle and note which letters are green, yellow, or gray
+3. In Wordle Guesser:
+   - Type "STARE" in the guess field
+   - Click on each letter to set the corresponding color from Wordle
+   - Click "Add Guess"
+4. Look at the suggested words that remain possible
+5. Choose one of the suggested words for your next guess in Wordle
+6. Repeat steps 2-5 until you solve the puzzle
+
+## Understanding the Visual Keyboard
+
+The visual keyboard shows the status of each letter based on all your guesses:
+- Green: This letter is confirmed to be in the correct position
+- Yellow: This letter is in the word but in a different position
+- Gray: This letter is not in the word
+- White: This letter hasn't been used in any guesses yet
+
+## Statistics and Analysis
+
+The statistics section shows:
+- Total number of remaining possible words
+- Most common letters in the remaining word pool with percentages
+- This helps you make strategic guesses to narrow down possibilities more effectively
 
 ## How the Algorithm Works
 
-The word filtering algorithm considers several important constraints:
+The word filtering algorithm has been enhanced to handle complex scenarios:
 
 1. **Green letters**: Must be in the exact position specified
 2. **Yellow letters**: Must be in the word, but not in the position where they were marked yellow
 3. **Gray letters**: Must not appear in the word, unless that letter also appears elsewhere and is marked yellow or green
-4. **Letter frequency**: Handles cases where a letter appears multiple times correctly
+4. **Letter frequency**: Correctly handles cases where a letter appears multiple times, including when some instances are marked gray while others are yellow or green
 
-For example, if you guess "HELLO" and get:
-- H: gray
-- E: green
-- L: yellow
-- L: gray
-- O: gray
+## Word Ranking Strategies
 
-The algorithm knows:
-- The second letter must be E
-- The word must contain exactly one L (not in position 3)
-- The word cannot contain H or O
+The app offers multiple ways to sort possible words:
+
+1. **Alphabetical**: Simple alphabetical sorting
+2. **Letter Frequency**: Ranks words based on how often their letters appear in the remaining word pool
+3. **Positional Frequency**: Ranks words based on how often letters appear in specific positions in the remaining word pool
+
+These strategies help you choose the most informative next guess to quickly solve the puzzle.
 
 ## Wordle Strategy Tips
 
 - Start with words that have common letters (E, A, R, T, S, I, O, N)
 - Use words with many different letters in your first few guesses
-- After finding some letters, use the suggestions to narrow down possibilities
+- After finding some green letters, use the positional frequency sorting
+- When you have several yellow letters, use the letter frequency sorting
 - Look for common prefixes and suffixes in the remaining words
-- Sometimes it's better to use a word that will eliminate many possibilities rather than trying to guess the answer immediately
-
-## Word List
-
-The application includes a comprehensive list of over 10,000 five-letter English words. This includes:
-
-- Common English words
-- Some proper nouns
-- Various word forms (plurals, past tenses, etc.)
 
 ## Technologies Used
 
@@ -97,14 +128,6 @@ The application includes a comprehensive list of over 10,000 five-letter English
 - **Tailwind CSS**: Utility-first CSS framework for styling
 - **JavaScript**: Core programming language
 - **React Hooks**: For state management and side effects
-
-## Optimization
-
-The app uses several optimization techniques:
-- Debouncing word filtering operations
-- Efficient filtering algorithms
-- Loading spinner for operations that might take time
-- Limiting displayed words to prevent UI slowdowns
 
 ## Contributing
 
@@ -115,14 +138,6 @@ Contributions are welcome! Here's how you can contribute:
 3. Commit your changes: `git commit -am 'Add new feature'`
 4. Push to the branch: `git push origin new-feature`
 5. Submit a pull request
-
-### Potential Improvements
-
-- Add dark mode support
-- Implement letter frequency analysis to rank suggestions
-- Add statistics on most likely words
-- Create a history feature to review past games
-- Add a "Hard Mode" that enforces Wordle's hard mode rules
 
 ## License
 
