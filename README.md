@@ -2,7 +2,9 @@
 
 An interactive tool to help you solve Wordle puzzles by suggesting possible words based on your previous guesses and feedback.
 
-![Wordle Guesser Screenshot](wordle.png)
+<div align="center">
+  <img src="wordle.png" alt="Wordle Guesser Screenshot">
+</div>
 
 ## Features
 
