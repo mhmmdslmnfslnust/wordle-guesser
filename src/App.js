@@ -379,11 +379,30 @@ const WordleGuesser = () => {
     return feedbackType ? feedbackType.description : '';
   };
 
+  // Add a new function to handle clicks on the keyboard
+  const handleKeyboardClick = (key) => {
+    // Only add letters if we're under 5 characters
+    if (currentGuess.length < 5) {
+      setCurrentGuess(prev => prev + key.toLowerCase());
+    }
+  };
+  
+  // Add a function to handle backspace from keyboard
+  const handleBackspace = () => {
+    setCurrentGuess(prev => prev.slice(0, -1));
+    // If removing a letter, also remove its feedback
+    if (feedback[currentGuess.length - 1]) {
+      const newFeedback = [...feedback];
+      newFeedback[currentGuess.length - 1] = '';
+      setFeedback(newFeedback);
+    }
+  };
+
   return (
     <div className="container mx-auto p-4 max-w-4xl">
       <h1 className="text-3xl font-bold mb-6 text-center">Wordle Guesser</h1>
       
-      {/* Word count status */}
+      {/* Loading status */}
       <div className="mb-4 text-center">
         {loading ? (
           <p className="text-blue-600">Loading words...</p>
@@ -395,6 +414,44 @@ const WordleGuesser = () => {
             Possible matches: <strong>{possibleWords.length}</strong>
           </p>
         )}
+      </div>
+      
+      {/* Interactive virtual keyboard with letter status */}
+      <div className="mb-6 bg-white p-4 border border-gray-200 rounded-lg shadow-sm">
+        <h2 className="text-xl font-semibold mb-2">Virtual Keyboard</h2>
+        <p className="text-sm text-gray-500 mb-2">Click or tap letters to type • Colors show letter statuses</p>
+        <div className="flex flex-col items-center gap-1 mb-2">
+          {KEYBOARD_LAYOUT.map((row, rowIndex) => (
+            <div key={rowIndex} className="flex gap-1">
+              {rowIndex === 2 && (
+                <button
+                  className="w-12 h-11 flex items-center justify-center font-medium rounded bg-gray-300 text-black"
+                  onClick={handleBackspace}
+                >
+                  ⌫
+                </button>
+              )}
+              {row.map(key => (
+                <button 
+                  key={key} 
+                  className={`w-9 h-11 flex items-center justify-center font-medium rounded ${getLetterStatusClass(key)} hover:opacity-80 active:opacity-70 cursor-pointer transition-all`}
+                  onClick={() => handleKeyboardClick(key)}
+                >
+                  {key}
+                </button>
+              ))}
+              {rowIndex === 2 && (
+                <button
+                  className="w-12 h-11 flex items-center justify-center font-medium rounded bg-blue-600 text-white hover:bg-blue-700"
+                  onClick={handleSubmitGuess}
+                  disabled={currentGuess.length !== 5}
+                >
+                  ↵
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
       
       {/* Form to enter guess */}
@@ -421,7 +478,7 @@ const WordleGuesser = () => {
               }}
               className="mt-1 p-2 w-full border rounded-md uppercase"
               maxLength="5"
-              placeholder="Enter your guess"
+              placeholder="Enter your guess or use keyboard below"
             />
           </div>
           
@@ -510,27 +567,6 @@ const WordleGuesser = () => {
             ))}
           </div>
         )}
-      </div>
-      
-      {/* Visual keyboard - Always displayed */}
-      <div className="mb-6 sticky bottom-4 bg-white p-4 border-t border-gray-200 shadow-lg rounded-lg">
-        <h2 className="text-xl font-semibold mb-2">Letter Status</h2>
-        <div className="flex flex-col items-center gap-1 mb-2">
-          {KEYBOARD_LAYOUT.map((row, rowIndex) => (
-            <div key={rowIndex} className="flex gap-1">
-              {rowIndex === 2 && <div className="w-4"></div>}
-              {row.map(key => (
-                <div 
-                  key={key} 
-                  className={`w-9 h-11 flex items-center justify-center font-medium rounded ${getLetterStatusClass(key)}`}
-                >
-                  {key}
-                </div>
-              ))}
-              {rowIndex === 2 && <div className="w-4"></div>}
-            </div>
-          ))}
-        </div>
       </div>
       
       {/* Statistics section */}
