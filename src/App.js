@@ -149,21 +149,21 @@ const WordleGuesser = () => {
             <div className="flex gap-2 mt-1">
               <button
                 type="button"
-                className="p-2 bg-green-500 text-white rounded-md"
+                className="button-primary bg-green-500"
                 onClick={() => setFeedback(feedback.length < 5 ? feedback + '🟩' : feedback)}
               >
                 🟩
               </button>
               <button
                 type="button"
-                className="p-2 bg-yellow-500 text-white rounded-md"
+                className="button-primary bg-yellow-500"
                 onClick={() => setFeedback(feedback.length < 5 ? feedback + '🟨' : feedback)}
               >
                 🟨
               </button>
               <button
                 type="button"
-                className="p-2 bg-gray-500 text-white rounded-md"
+                className="button-primary bg-gray-500"
                 onClick={() => setFeedback(feedback.length < 5 ? feedback + '⬛' : feedback)}
               >
                 ⬛
@@ -178,7 +178,7 @@ const WordleGuesser = () => {
               />
               <button
                 type="button"
-                className="p-2 bg-gray-200 rounded-md"
+                className="button-secondary"
                 onClick={() => setFeedback(feedback.slice(0, -1))}
               >
                 ←
@@ -189,7 +189,7 @@ const WordleGuesser = () => {
           <div className="w-full md:w-1/3">
             <button
               type="submit"
-              className="mt-6 p-2 bg-blue-600 text-white rounded-md w-full hover:bg-blue-700 disabled:bg-blue-300"
+              className="button-primary mt-6 w-full"
               disabled={currentGuess.length !== 5 || feedback.length !== 5}
             >
               Add Guess
@@ -210,10 +210,10 @@ const WordleGuesser = () => {
                 {Array.from(guess.word).map((letter, i) => (
                   <div
                     key={i}
-                    className={`w-10 h-10 flex items-center justify-center font-bold text-white ${
-                      guess.feedback[i] === '🟩' ? 'bg-green-500' :
-                      guess.feedback[i] === '🟨' ? 'bg-yellow-500' : 'bg-gray-500'
-                    } rounded-md`}
+                    className={`letter-tile ${
+                      guess.feedback[i] === '🟩' ? 'letter-tile-green' :
+                      guess.feedback[i] === '🟨' ? 'letter-tile-yellow' : 'letter-tile-gray'
+                    }`}
                   >
                     {letter.toUpperCase()}
                   </div>
@@ -229,7 +229,7 @@ const WordleGuesser = () => {
         <button
           type="button"
           onClick={resetGame}
-          className="p-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+          className="button-danger"
         >
           Reset
         </button>
@@ -239,7 +239,7 @@ const WordleGuesser = () => {
       <div>
         {loading ? (
           <div className="flex justify-center my-8">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-700"></div>
+            <div className="spinner"></div>
           </div>
         ) : (
           <div>
@@ -249,7 +249,7 @@ const WordleGuesser = () => {
             ) : (
               <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
                 {possibleWords.slice(0, 100).map((word, index) => (
-                  <div key={index} className="p-2 border rounded-md hover:bg-gray-100 cursor-pointer"
+                  <div key={index} className="word-suggestion"
                        onClick={() => setCurrentGuess(word)}>
                     {word}
                   </div>

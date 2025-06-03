@@ -1,6 +1,6 @@
 {
   "name": "wordle-guesser",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "private": true,
   "dependencies": {
     "react": "^18.2.0",
@@ -34,5 +34,17 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
-  }
+  },
+  "description": "An interactive tool to help solve Wordle puzzles by suggesting possible words based on your guesses and feedback",
+  "author": "Your Name",
+  "license": "MIT",
+  "keywords": [
+    "wordle",
+    "game",
+    "helper",
+    "puzzle",
+    "word",
+    "react",
+    "tailwind"
+  ]
 }
