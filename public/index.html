@@ -3,17 +3,33 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
+    <meta name="theme-color" content="#e6b91e" />
     <meta name="description" content="Wordle Guesser - Help solve Wordle puzzles" />
     <title>Wordle Guesser</title>
+    <link rel="stylesheet" href="%PUBLIC_URL%/styles/schooloflife-theme.css">
     <script>
       // Pre-fetch the words list to improve load time
       fetch('/words.txt')
         .catch(err => console.warn('Words list pre-fetch failed, will try again during app load'));
+      
+      // Initial dark mode setup - minimal to avoid conflicts
+      (function() {
+        const storedTheme = localStorage.getItem('theme');
+        const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+        
+        // Apply theme based on preference
+        if (storedTheme === 'dark' || (!storedTheme && prefersDark)) {
+          document.documentElement.classList.add('dark-mode');
+          document.body.classList.add('dark-mode');
+        }
+      })();
     </script>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
+    
+    <!-- Dark mode toggle functionality -->
+    <script src="%PUBLIC_URL%/js/dark-mode-toggle.js" defer></script>
   </body>
 </html>

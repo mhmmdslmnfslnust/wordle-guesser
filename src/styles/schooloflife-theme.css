@@ -1,0 +1,633 @@
+/* School of Life inspired theme for Wordle Guesser */
+
+/* Import Bebas Neue font */
+@import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap');
+
+:root {
+  /* Base Colors - Light Mode */
+  --sol-background: #f9f8f5; /* Soft off-white/beige background */
+  --sol-text: #333333; /* Deep charcoal for text */
+  --sol-primary: #e6b91e; /* Mustard yellow primary */
+  --sol-secondary: #d35656; /* Warm red as secondary */
+  --sol-tertiary: #528c83; /* Teal accent */
+  
+  /* UI Elements - Light Mode */
+  --sol-surface: #ffffff; /* Card/component backgrounds */
+  --sol-border: #eeeeea; /* Light borders */
+  --sol-disabled: #a2a2a2; /* Disabled elements */
+  --sol-card-bg: #ffffff; /* Card background */
+  --sol-input-bg: #ffffff; /* Input background */
+  --sol-stat-bg: #f3f4f6; /* Statistics background */
+  --sol-hover: #f3f4f6; /* Hover state background */
+  
+  /* Wordle Game Elements - Light Mode */
+  --sol-tile-empty: #ffffff;
+  --sol-tile-filled: #e6e6e6;
+  --sol-tile-correct: #6aaa64; /* Green for correct position */
+  --sol-tile-present: #c9b458; /* Yellow for wrong position */
+  --sol-tile-absent: #787c7e; /* Gray for absent letters */
+  --sol-keyboard-bg: #d3d6da;
+  
+  /* Dark Mode Colors */
+  --sol-dark-background: #1c1c1c;
+  --sol-dark-text: #e0e0e0;
+  --sol-dark-surface: #252525;
+  --sol-dark-border: #2a2a2a;
+  --sol-dark-disabled: #6e6e6e;
+  --sol-dark-card-bg: #252525; /* Card background in dark mode */
+  --sol-dark-input-bg: #333333; /* Input background in dark mode */
+  --sol-dark-stat-bg: #333333; /* Statistics background in dark mode */
+  --sol-dark-hover: #333333; /* Hover state in dark mode */
+  
+  /* Wordle Game Elements - Dark Mode */
+  --sol-dark-tile-empty: #121212;
+  --sol-dark-tile-filled: #2c2c2c;
+  --sol-dark-tile-correct: #538d4e;
+  --sol-dark-tile-present: #b59f3b;
+  --sol-dark-tile-absent: #3a3a3c;
+  /* --sol-dark-keyboard-bg: #818384; */
+  /* --sol-dark-keyboard-bg: #343726; */
+  --sol-dark-keyboard-bg: #25271c;
+}
+
+/* Dark mode variable switching */
+.dark-mode {
+  --sol-background: var(--sol-dark-background);
+  --sol-text: var(--sol-dark-text);
+  --sol-surface: var(--sol-dark-surface);
+  --sol-border: var(--sol-dark-border);
+  --sol-disabled: var(--sol-dark-disabled);
+  --sol-card-bg: var(--sol-dark-card-bg);
+  --sol-input-bg: var(--sol-dark-input-bg);
+  --sol-stat-bg: var(--sol-dark-stat-bg);
+  --sol-hover: var(--sol-dark-hover);
+  
+  /* Game elements */
+  --sol-tile-empty: var(--sol-dark-tile-empty);
+  --sol-tile-filled: var(--sol-dark-tile-filled);
+  --sol-tile-correct: var(--sol-dark-tile-correct);
+  --sol-tile-present: var(--sol-dark-tile-present);
+  --sol-tile-absent: var(--sol-dark-tile-absent);
+  --sol-keyboard-bg: var(--sol-dark-keyboard-bg);
+}
+
+/* Base styles */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+  background-color: var(--sol-background);
+  color: var(--sol-text);
+  line-height: 1.6;
+  transition: background-color 0.3s ease, color 0.3s ease;
+  margin: 0;
+  padding: 0;
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Bebas Neue', sans-serif;
+  line-height: 1.04;
+  text-transform: uppercase;
+  font-weight: 400;
+  letter-spacing: 0.5px;
+  color: var(--sol-text);
+  position: relative;
+  display: inline-block;
+}
+
+h1:after, h2:after {
+  content: '';
+  position: absolute;
+  width: 30%;
+  height: 3px;
+  bottom: -6px;
+  left: 0;
+  background-color: var(--sol-primary);
+  transition: width 0.3s ease;
+}
+
+h1.centered-title {
+  text-align: center;
+  width: 100%;
+  display: block;
+}
+
+h1.centered-title:after {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* Buttons */
+.btn, button {
+  font-family: 'Bebas Neue', sans-serif;
+  background-color: var(--sol-text);
+  color: var(--sol-background);
+  border: none;
+  padding: 12px 24px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  font-size: 1rem;
+  border-radius: 0;
+}
+
+.btn:hover, button:hover {
+  background-color: var(--sol-primary);
+  color: var(--sol-text);
+}
+
+.btn-primary {
+  background-color: var(--sol-primary);
+  color: var(--sol-text);
+}
+
+.btn-primary:hover {
+  opacity: 0.9;
+}
+
+/* Links */
+a {
+  color: var(--sol-text);
+  text-decoration: none;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+a:hover {
+  color: var(--sol-primary);
+}
+
+a:after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 1px;
+  bottom: -2px;
+  left: 0;
+  background-color: var(--sol-primary);
+  transition: width 0.3s ease;
+}
+
+a:hover:after {
+  width: 100%;
+  background-color: var(--sol-primary);
+}
+
+/* Layout containers */
+.container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.card {
+  background-color: var(--sol-card-bg);
+  border: none;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  padding: 24px;
+  margin-bottom: 24px;
+  transition: background-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Header and Navigation */
+.header {
+  background-color: var(--sol-surface);
+  padding: 16px 0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  position: relative;
+}
+
+.header-container {
+  position: relative;
+  text-align: center;
+  padding: 16px 0;
+}
+
+.header-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 1.75rem;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.toggle-container {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.nav-link {
+  font-family: 'Bebas Neue', sans-serif;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-right: 24px;
+  font-size: 1.1rem;
+}
+
+/* Dark mode toggle */
+.dark-mode-toggle {
+  background: none;
+  border: none;
+  color: var(--sol-text);
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.3s ease;
+}
+
+.dark-mode-toggle:hover {
+  transform: scale(1.1);
+}
+
+.dark-mode-toggle svg {
+  width: 20px;
+  height: 20px;
+  transition: opacity 0.3s ease, transform 0.5s ease;
+}
+
+.dark-mode-toggle .sun-icon {
+  position: absolute;
+  opacity: 0;
+  transform: rotate(90deg);
+}
+
+.dark-mode-toggle .moon-icon {
+  opacity: 1;
+}
+
+.dark-mode .dark-mode-toggle .sun-icon {
+  opacity: 1;
+  transform: rotate(0);
+}
+
+.dark-mode .dark-mode-toggle .moon-icon {
+  opacity: 0;
+  transform: rotate(-90deg);
+}
+
+/* Wordle Game UI */
+.game-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 0;
+}
+
+.wordle-grid {
+  display: grid;
+  grid-template-rows: repeat(6, 1fr);
+  grid-gap: 5px;
+  margin-bottom: 30px;
+}
+
+.wordle-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  grid-gap: 5px;
+}
+
+.wordle-tile {
+  width: 62px;
+  height: 62px;
+  border: 2px solid var(--sol-border);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 2rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  background-color: var(--sol-tile-empty);
+  transition: all 0.2s ease;
+}
+
+.wordle-tile.filled {
+  background-color: var(--sol-tile-filled);
+  border-color: var(--sol-text);
+}
+
+.wordle-tile.correct {
+  background-color: var(--sol-tile-correct);
+  border-color: var(--sol-tile-correct);
+  color: white;
+}
+
+.wordle-tile.present {
+  background-color: var(--sol-tile-present);
+  border-color: var(--sol-tile-present);
+  color: white;
+}
+
+.wordle-tile.absent {
+  background-color: var(--sol-tile-absent);
+  border-color: var(--sol-tile-absent);
+  color: white;
+}
+
+.keyboard-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 20px;
+  width: 100%;
+  max-width: 500px;
+}
+
+.keyboard-row {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin: 2px 0;
+}
+
+.keyboard-key {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  font-size: 0.9rem;
+  font-weight: bold;
+  border: none;
+  border-radius: 4px;
+  background-color: var(--sol-keyboard-bg);
+  color: var(--sol-text);
+  padding: 0;
+  margin: 0 2px;
+  height: 58px;
+  min-width: 42px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.2s ease, transform 0.15s ease, box-shadow 0.15s ease;
+  cursor: pointer;
+  text-transform: uppercase;
+}
+
+.keyboard-key:hover {
+  opacity: 0.9;
+  background-color: var(--sol-primary); /* Yellowish background on hover */
+  color: var(--sol-text); /* Maintain contrast */
+}
+
+.dark-mode .keyboard-key:hover {
+  opacity: 0.9;
+  background-color: rgba(230, 185, 30, 0.6); /* Semi-transparent primary yellow */
+  color: var(--sol-dark-text); 
+}
+
+/* Keyboard hover effects differentiated by status */
+/* Default keys (no status yet) */
+.keyboard-key:hover,
+.keyboard-default:hover {
+  opacity: 0.9;
+  background-color: var(--sol-primary) !important; /* Yellow background */
+  color: var(--sol-text) !important;
+  transform: translateY(-2px);
+}
+
+.dark-mode .keyboard-key:hover,
+.dark-mode .keyboard-default:hover {
+  background-color: rgba(230, 185, 30, 0.6) !important; /* Semi-transparent yellow */
+  color: var(--sol-dark-text) !important;
+  transform: translateY(-2px);
+}
+
+/* Keys with status - different hover effect */
+.bg-green-500:hover,
+button.bg-green-500:hover {
+  opacity: 0.85 !important;
+  box-shadow: 0 0 8px var(--sol-tile-correct) !important;
+  transform: translateY(-1px);
+  background-color: var(--sol-tile-correct) !important; /* Keep original color */
+}
+
+.bg-yellow-500:hover,
+button.bg-yellow-500:hover {
+  opacity: 0.85 !important;
+  box-shadow: 0 0 8px var(--sol-tile-present) !important;
+  transform: translateY(-1px);
+  background-color: var(--sol-tile-present) !important; /* Keep original color */
+}
+
+.bg-gray-500:hover,
+button.bg-gray-500:hover {
+  opacity: 0.85 !important;
+  box-shadow: 0 0 8px var(--sol-tile-absent) !important;
+  transform: translateY(-1px);
+  background-color: var(--sol-tile-absent) !important; /* Keep original color */
+}
+
+/* Dark mode status keys */
+.dark-mode .bg-green-500:hover,
+.dark-mode button.bg-green-500:hover {
+  box-shadow: 0 0 10px var(--sol-dark-tile-correct) !important;
+  background-color: var(--sol-dark-tile-correct) !important;
+}
+
+.dark-mode .bg-yellow-500:hover,
+.dark-mode button.bg-yellow-500:hover {
+  box-shadow: 0 0 10px var(--sol-dark-tile-present) !important;
+  background-color: var(--sol-dark-tile-present) !important;
+}
+
+.dark-mode .bg-gray-500:hover,
+.dark-mode button.bg-gray-500:hover {
+  box-shadow: 0 0 10px var(--sol-dark-tile-absent) !important;
+  background-color: var(--sol-dark-tile-absent) !important;
+}
+
+/* Keyboard key transition improvements */
+.keyboard-key {
+  /* ...existing code... */
+  transition: all 0.2s ease, transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Dark mode variable switching */
+.dark-mode {
+  --sol-background: var(--sol-dark-background);
+  --sol-text: var(--sol-dark-text);
+  --sol-surface: var(--sol-dark-surface);
+  --sol-border: var(--sol-dark-border);
+  --sol-disabled: var(--sol-dark-disabled);
+  --sol-card-bg: var(--sol-dark-card-bg);
+  --sol-input-bg: var(--sol-dark-input-bg);
+  --sol-stat-bg: var(--sol-dark-stat-bg);
+  --sol-hover: var(--sol-dark-hover);
+  
+  /* Game elements */
+  --sol-tile-empty: var(--sol-dark-tile-empty);
+  --sol-tile-filled: var(--sol-dark-tile-filled);
+  --sol-tile-correct: var(--sol-dark-tile-correct);
+  --sol-tile-present: var(--sol-dark-tile-present);
+  --sol-tile-absent: var(--sol-dark-tile-absent);
+  --sol-keyboard-bg: var(--sol-dark-keyboard-bg);
+}
+
+/* Fix for keyboard keys in dark mode */
+.dark-mode .bg-gray-200 {
+  background-color: var(--sol-dark-keyboard-bg) !important;
+  color: var(--sol-dark-text) !important;
+}
+
+.dark-mode .keyboard-key {
+  background-color: var(--sol-dark-keyboard-bg) !important;
+  color: var(--sol-dark-text) !important;
+}
+
+/* Fix for the feedback tiles in dark mode */
+.dark-mode .bg-white.border-2.border-gray-300 {
+  background-color: var(--sol-dark-tile-empty) !important;
+  border-color: var(--sol-dark-border) !important;
+}
+
+/* Fix FEEDBACK_TYPES in dark mode */
+.dark-mode .bg-white.border-2 {
+  background-color: var(--sol-dark-tile-empty) !important;
+}
+
+/* Tailwind compatibility - ensure these work with dark mode */
+.dark-mode .bg-white {
+  background-color: var(--sol-dark-card-bg) !important;
+}
+
+.dark-mode .bg-gray-100 {
+  background-color: var(--sol-dark-stat-bg) !important;
+}
+
+.dark-mode .text-gray-700 {
+  color: var(--sol-dark-text) !important;
+}
+
+.dark-mode .text-gray-500, 
+.dark-mode .text-gray-600, 
+.dark-mode .text-gray-400 {
+  color: var(--sol-dark-disabled) !important;
+}
+
+.dark-mode .hover\:bg-gray-100:hover {
+  background-color: var(--sol-dark-hover) !important;
+}
+
+/* Fix for component backgrounds */
+.dark-mode .border-gray-200 {
+  border-color: var(--sol-dark-border) !important;
+}
+
+/* Fix statistics cards in dark mode */
+.dark-mode .shadow {
+  box-shadow: 0 1px 3px rgba(0,0,0,0.5) !important;
+}
+
+/* Selection styling - yellowish background when text is selected */
+::selection {
+  background-color: rgba(230, 185, 30, 0.6); /* More opaque yellow highlight */
+  color: var(--sol-text);
+}
+
+::-moz-selection {
+  background-color: rgba(230, 185, 30, 0.6); /* Firefox compatibility */
+  color: var(--sol-text);
+}
+
+.dark-mode ::selection {
+  background-color: rgba(230, 185, 30, 0.7); /* Even more opaque in dark mode */
+  color: var(--sol-dark-text);
+}
+
+.dark-mode ::-moz-selection {
+  background-color: rgba(230, 185, 30, 0.7); /* Firefox compatibility */
+  color: var(--sol-dark-text);
+}
+
+/* Form elements - ensure they respect dark mode */
+input, textarea, select {
+  background-color: var(--sol-input-bg);
+  color: var(--sol-text);
+  border: 1px solid var(--sol-border);
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+}
+
+input:focus, textarea:select:focus {
+  outline: none;
+  border-color: var(--sol-primary);
+}
+
+/* Enhanced dark mode styles for inputs with stronger specificity */
+.dark-mode input[type="text"],
+.dark-mode input[type="search"], 
+.dark-mode input[type="email"],
+.dark-mode input[type="password"],
+.dark-mode select,
+.dark-mode textarea {
+  background-color: var(--sol-dark-input-bg) !important;
+  color: var(--sol-dark-text) !important;
+  border-color: var(--sol-dark-border) !important;
+}
+
+/* Fix for placeholder text in dark mode */
+.dark-mode input::placeholder,
+.dark-mode textarea::placeholder {
+  color: var(--sol-dark-disabled) !important;
+}
+
+/* Add subtle focus effect in dark mode */
+.dark-mode input:focus,
+.dark-mode textarea:focus,
+.dark-mode select:focus {
+  border-color: var(--sol-primary) !important;
+  box-shadow: 0 0 0 1px rgba(230, 185, 30, 0.2) !important;
+}
+
+/* Override Tailwind classes that might be used on inputs */
+.dark-mode .border,
+.dark-mode .border-gray-200,
+.dark-mode .border-gray-300 {
+  border-color: var(--sol-dark-border) !important;
+}
+
+.dark-mode .bg-white,
+.dark-mode .bg-gray-50 {
+  background-color: var(--sol-dark-input-bg) !important;
+}
+
+/* Responsive styles */
+@media (max-width: 500px) {
+  .wordle-tile {
+    width: 50px;
+    height: 50px;
+    font-size: 1.5rem;
+  }
+  
+  .keyboard-key {
+    height: 48px;
+    min-width: 32px;
+    font-size: 0.85rem;
+  }
+  
+  .keyboard-key.wide {
+    min-width: 48px;
+  }
+}
+
+@media (max-width: 400px) {
+  .wordle-tile {
+    width: 40px;
+    height: 40px;
+    font-size: 1.25rem;
+  }
+  
+  .keyboard-key {
+    height: 40px;
+    min-width: 28px;
+    font-size: 0.75rem;
+    margin: 0 1px;
+  }
+  
+  .keyboard-key.wide {
+    min-width: 40px;
+  }
+}
