@@ -390,19 +390,31 @@ const WordleGuesser = () => {
     setError(null);
   };
 
-  // Get CSS class for letter status
+  // Get CSS class for letter status - dark mode compatible
   const getLetterStatusClass = (letter) => {
     const status = letterStatuses[letter.toLowerCase()];
-    if (!status) return 'bg-gray-200 text-black';
+    if (!status) return 'keyboard-default'; // Use custom class instead of bg-gray-200
     
     switch (status) {
       case '🟩': return 'bg-green-500 text-white';
       case '🟨': return 'bg-yellow-500 text-white';
       case '⬛': return 'bg-gray-500 text-white';
-      default: return 'bg-gray-200 text-black';
+      default: return 'keyboard-default'; // Use custom class
     }
   };
   
+  // Add this CSS class definition to your stylesheet
+  const keyboardStyles = `
+    .keyboard-default {
+      background-color: var(--sol-keyboard-bg);
+      color: var(--sol-text);
+    }
+    .dark-mode .keyboard-default {
+      background-color: var(--sol-dark-keyboard-bg);
+      color: var(--sol-dark-text);
+    }
+  `;
+
   // Generate statistics for remaining words
   const getStatistics = () => {
     if (!possibleWords.length) return {};
@@ -484,6 +496,8 @@ const WordleGuesser = () => {
 
   return (
     <ThemeProvider>
+      {/* Add the styles to the DOM */}
+      <style>{keyboardStyles}</style>
       <div className={themeClasses.container}>
         {/* Updated header with centered title and toggle on side */}
         <header className="header-container mb-6">
