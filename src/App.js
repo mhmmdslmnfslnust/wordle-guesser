@@ -494,6 +494,31 @@ const WordleGuesser = () => {
     wordItem: "p-2 border rounded-md hover:bg-gray-100 cursor-pointer"
   };
 
+  // Number of words to display based on screen size
+  const [displayLimit, setDisplayLimit] = useState(100);
+  
+  // Update display limit based on screen size
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth <= 480) {
+        setDisplayLimit(26);
+      } else if (window.innerWidth <= 768) {
+        setDisplayLimit(50);
+      } else {
+        setDisplayLimit(100);
+      }
+    };
+    
+    // Set initial value
+    handleResize();
+    
+    // Add listener for window resize
+    window.addEventListener('resize', handleResize);
+    
+    // Cleanup
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   return (
     <ThemeProvider>
       {/* Add the styles to the DOM */}
@@ -522,15 +547,15 @@ const WordleGuesser = () => {
         </div>
         
         {/* Make the virtual keyboard a highlighted section */}
-        <div className={`${themeClasses.virtualKeyboard} highlight-section`}>
+        <div className={`${themeClasses.virtualKeyboard} highlight-section keyboard-wrapper`}>
           <h2 className="text-xl font-semibold mb-2">Virtual Keyboard</h2>
           <p className="text-sm text-gray-500 mb-2">Click or tap letters to type • Colors show letter statuses</p>
-          <div className="flex flex-col items-center gap-1 mb-2">
+          <div className="keyboard-container">
             {KEYBOARD_LAYOUT.map((row, rowIndex) => (
-              <div key={rowIndex} className="flex gap-1">
+              <div key={rowIndex} className="keyboard-row">
                 {rowIndex === 2 && (
                   <button
-                    className="w-12 h-11 flex items-center justify-center font-medium rounded bg-gray-300 text-black"
+                    className="keyboard-key keyboard-action flex items-center justify-center font-medium rounded bg-gray-300 text-black"
                     onClick={handleBackspace}
                   >
                     ⌫
@@ -539,7 +564,7 @@ const WordleGuesser = () => {
                 {row.map(key => (
                   <button 
                     key={key} 
-                    className={`w-9 h-11 flex items-center justify-center font-medium rounded ${getLetterStatusClass(key)} hover:opacity-80 active:opacity-70 cursor-pointer transition-all`}
+                    className={`keyboard-key flex items-center justify-center font-medium rounded ${getLetterStatusClass(key)} hover:opacity-80 active:opacity-70 cursor-pointer transition-all`}
                     onClick={() => handleKeyboardClick(key)}
                   >
                     {key}
@@ -547,7 +572,7 @@ const WordleGuesser = () => {
                 ))}
                 {rowIndex === 2 && (
                   <button
-                    className="w-12 h-11 flex items-center justify-center font-medium rounded bg-blue-600 text-white hover:bg-blue-700"
+                    className="keyboard-key keyboard-action flex items-center justify-center font-medium rounded bg-blue-600 text-white hover:bg-blue-700"
                     onClick={handleSubmitGuess}
                     disabled={currentGuess.length !== 5}
                   >
@@ -726,7 +751,7 @@ const WordleGuesser = () => {
           </div>
         </div>
         
-        {/* Display possible words - Update word items */}
+        {/* Display possible words - Update for responsiveness */}
         <div>
           {loading ? (
             <div className="flex justify-center my-8">
@@ -741,8 +766,8 @@ const WordleGuesser = () => {
               {rankedWords.length === 0 ? (
                 <p className="text-gray-500">No matching words found. Try different guesses or check your feedback.</p>
               ) : (
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-2">
-                  {rankedWords.slice(0, 100).map((word, index) => (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2">
+                  {rankedWords.slice(0, displayLimit).map((word, index) => (
                     <div 
                       key={index} 
                       className={themeClasses.wordItem}
@@ -751,9 +776,9 @@ const WordleGuesser = () => {
                       {word}
                     </div>
                   ))}
-                  {rankedWords.length > 100 && (
+                  {rankedWords.length > displayLimit && (
                     <div className="p-2 col-span-full text-center text-gray-500">
-                      ...and {rankedWords.length - 100} more words
+                      ...and {rankedWords.length - displayLimit} more words
                     </div>
                   )}
                 </div>
