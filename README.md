@@ -3,7 +3,7 @@
 An interactive tool to help you solve Wordle puzzles by suggesting possible words based on your previous guesses and feedback.
 
 <div align="center">
-  <img src="wordle.png" alt="Wordle Guesser Screenshot">
+  <img src="light-mode.png" alt="Wordle Guesser Screenshot">
 </div>
 
 ## Features
